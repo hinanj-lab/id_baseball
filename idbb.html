@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ID野球</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="js/utils.js" defer></script>
+  <!-- エンジンを先に静的読み込みして動的読込失敗を防止 -->
+  <script src="js/engine.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header id="toolbar" class="toolbar">
+    <div class="toolbar-inner">
+      <button id="btn-start" type="button">試合開始</button>
+      <button id="btn-reset-game" type="button">試合リセット</button>
+      <button id="btn-reset-all" type="button">全リセット</button>
+      <div class="toolbar-controls" role="group" aria-label="試合設定">
+        <label>人数
+          <select id="player-count">
+            <option value="9" selected>9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+        <label>DH
+          <select id="dh-select">
+            <option value="off" selected>なし</option>
+            <option value="on">あり</option>
+          </select>
+        </label>
+        <label>乱打補正
+          <select id="slugfest-level" title="0で投高、+2で打高">
+            <option value="-20">-1</option>
+            <option value="-10" selected>0</option>
+            <option value="-5">+1</option>
+          </select>
+        </label>
+        <label>試合乱数シード
+          <input id="seed-input" type="text" placeholder="空=毎回ランダム">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 設定パネルはツールバーへ移設 -->
+
+    <section id="rosters" class="panel">
+      <div class="panel-header">
+        <h2 class="panel-toggle" role="button" tabindex="0" aria-expanded="true">メンバー編成</h2>
+        <button id="btn-auto-lineup" type="button">メンバー自動編成</button>
+        <span id="btn-copy-roster" class="dli-copy sbh-copy" title="編成テキストをコピー"><span></span></span>
+      </div>
+      <div class="roster-grid" id="roster-grid">
+        <div class="team-col" data-team="A">
+          <!-- <h3>チームA</h3> -->
+          <div class="team-name-row">
+            <label>チーム選択
+              <select class="team-preset" data-side="A"></select>
+            </label>
+            <label>正式名
+              <input class="team-name" data-side="A" type="text" placeholder="正式名">
+            </label>
+            <label>略称
+              <input class="team-abbr" data-side="A" type="text" placeholder="略称">
+            </label>
+          </div>
+          <div class="team-actions">
+            <button type="button" class="btn-fill-blanks" data-side="A">空欄ランダム埋め</button>
+            <button type="button" class="btn-clear-names" data-side="A">名前・IDをクリア</button>
+            <!-- <button type="button" class="btn-recalc" data-side="A">能力再計算</button> -->
+          </div>
+          <div class="roster-head">
+            <span>No</span><span>名前</span><span>ID</span><span>希望</span><span></span><span></span>
+          </div>
+          <div class="roster-rows" id="rows-A"></div>
+        </div>
+        <div class="team-col" data-team="B">
+          <!-- <h3>チームB</h3> -->
+          <div class="team-name-row">
+            <label>チーム選択
+              <select class="team-preset" data-side="B"></select>
+            </label>
+            <label>正式名
+              <input class="team-name" data-side="B" type="text" placeholder="正式名">
+            </label>
+            <label>略称
+              <input class="team-abbr" data-side="B" type="text" placeholder="略称">
+            </label>
+          </div>
+          <div class="team-actions">
+            <button type="button" class="btn-fill-blanks" data-side="B">空欄ランダム埋め</button>
+            <button type="button" class="btn-clear-names" data-side="B">名前・IDをクリア</button>
+            <!-- <button type="button" class="btn-recalc" data-side="B">能力再計算</button> -->
+          </div>
+          <div class="roster-head">
+            <span>No</span><span>名前</span><span>ID</span><span>希望</span><span></span><span></span>
+          </div>
+          <div class="roster-rows" id="rows-B"></div>
+        </div>
+      </div>
+
+      <div id="lineups" class="lineups"></div>
+    </section>
+
+    <section id="game" class="panel">
+      <h2>試合結果</h2>
+      <div id="scoreboard" class="scoreboard"></div>
+
+      <div class="game-cols">
+        <div id="col-stats" class="game-col">
+          <h3 class="section-toggle" data-target="#stats-block" role="button" tabindex="0" aria-expanded="true">成績</h3>
+          <div id="stats-block" class="collapsible">
+            <div class="stats-grid">
+              <div id="stats-bat" class="stats"></div>
+              <div class="stats-right">
+                <div id="stats-pit" class="stats"></div>
+                <div id="records" class="records"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="col-logs" class="game-col">
+          <h3 class="section-toggle" data-target="#summary-log" role="button" tabindex="0" aria-expanded="false">試合ログ</h3>
+          <div id="summary-log" class="summary-log collapsible collapsed"></div>
+          <h3 class="section-toggle" data-target="#highlights" role="button" tabindex="0" aria-expanded="true">ハイライト</h3>
+          <div id="highlights" class="highlights collapsible"></div>
+        </div>
+      </div>
+
+      <div id="result" class="result"></div>
+      <div class="article-copy">
+        <button id="btn-copy-article" type="button">記事用プロンプトコピー</button>
+        <button id="btn-download-view-csv" type="button">ログCSV</button>
+        <button id="btn-download-csv" type="button">デバッグログCSV</button>
+        <button id="btn-download-multi" type="button">複数CSVダウンロード（ZIP）</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
